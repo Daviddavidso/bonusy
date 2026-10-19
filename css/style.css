@@ -1,0 +1,293 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Бонусы — вёрстка. Структура один в один с референсом (bombonus.ru:
+   плашка, заголовок, 2×2 карточки, промокод, кнопка, полоса доверия),
+   оформление своё — по просьбе клиента «смени цвета и оформление»:
+   тёмно-сливовый фон вместо синего, заголовки Unbounded, цветная кромка
+   сверху карточки, кнопки-таблетки без градиентов, промокод «купоном».
+
+   Доступность: все пары текст/фон ≥ 5:1 (считалось для каждой из 8 тем),
+   анимация только у точки «актуально» и два раза (WCAG 2.2.2),
+   видимое кольцо фокуса с клавиатуры.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+@font-face { font-family: 'Unbounded'; font-style: normal; font-weight: 800; font-display: swap;
+  src: url(../fonts/unbounded-800.woff2) format('woff2'); }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400 900; font-display: swap;
+  src: url(../fonts/inter-cyr.woff2) format('woff2'); unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: 'Inter'; font-style: normal; font-weight: 400 900; font-display: swap;
+  src: url(../fonts/inter-lat.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+:root {
+  --bg: #0d0b10;
+  --card: #16121c;
+  --card-2: #1d1826;
+  --line: rgba(255, 255, 255, .08);
+  --ink: #f4f1f8;      /* 16,5:1 на карточке */
+  --muted: #a7a2b3;    /*  7,4:1 */
+  --faint: #8a8596;    /*  5,2:1 */
+  --gold: #f5c542;
+  --display: 'Unbounded', 'Inter', -apple-system, sans-serif;
+}
+
+*, ::before, ::after { box-sizing: border-box; border: 0 solid var(--line); }
+html { line-height: 1.5; -webkit-text-size-adjust: 100%; tab-size: 4; scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent; }
+body, h1, h2, p, dl, dd { margin: 0; }
+h1, h2 { font-size: inherit; font-weight: inherit; }
+a { color: inherit; text-decoration: inherit; }
+button { font: inherit; color: inherit; margin: 0; padding: 0; line-height: inherit; background: none;
+  cursor: pointer; text-transform: none; -webkit-appearance: button; }
+svg { display: block; vertical-align: middle; }
+[hidden] { display: none !important; }
+
+body {
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 1rem;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(60rem 28rem at 50% -8rem, rgba(245, 197, 66, .13), transparent 70%),
+    radial-gradient(40rem 24rem at 100% 100%, rgba(167, 139, 250, .07), transparent 70%);
+  background-repeat: no-repeat;
+}
+::selection { background: var(--gold); color: #0d0b10; }
+
+.vh { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+/* Кольцо фокуса — только с клавиатуры, мышью его не видно. */
+a:focus-visible, button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+main:focus { outline: none; }
+
+.wrap { width: 100%; max-width: 64rem; margin: 0 auto; }
+
+/* ── шапка ─────────────────────────────────────────────────────────────── */
+
+.hero { max-width: 42rem; margin: 0 auto 2rem; text-align: center; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: .5rem;
+  padding: .4rem .85rem; margin-bottom: 1.1rem;
+  border-radius: 9999px; border: 1px solid var(--line);
+  background: var(--card);
+}
+.badge__dot { width: .55rem; height: .55rem; border-radius: 9999px; background: var(--gold); flex-shrink: 0;
+  box-shadow: 0 0 0 3px rgba(245, 197, 66, .18);
+  animation: live-pulse 2s 2 ease-in-out; }
+.badge__text { font-size: .72rem; line-height: 1rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .08em; color: var(--muted); }
+@keyframes live-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.3); opacity: .7; }
+}
+
+.hero__title { margin-bottom: .85rem; font-family: var(--display); font-weight: 800;
+  font-size: clamp(1.05rem, .2rem + 4.2vw, 2.4rem); line-height: 1.15;   /* растёт и при зуме; «официальных партнеров» = 16,94em влезает на 320 */ letter-spacing: -.01em; color: #fff;
+  overflow-wrap: break-word; }
+.hero__br { display: none; }
+.hero__accent { color: var(--gold); }
+.hero__lead { font-size: .875rem; line-height: 1.35rem; color: var(--muted); }
+
+/* ── карточки ──────────────────────────────────────────────────────────── */
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+.nojs { grid-column: 1 / -1; text-align: center; color: var(--muted); font-size: .875rem; }
+
+/* Цвет карточки. Тема задаётся классом t-<имя> (поле theme в data.js).
+   --a4 — основной тон (кромка, кнопка, купон), --a3 — светлее, для текста
+   на тёмном. Записаны как «r g b», чтобы подмешивать прозрачность.
+   Ключи тем — те же, что в панели: amber cyan emerald purple rose orange blue lime. */
+.card     { --a4: 245 197 66;  --a3: 251 217 106; }  /* amber  → золото   */
+.t-cyan   { --a4: 34 211 238;  --a3: 103 232 249; }
+.t-emerald{ --a4: 52 211 153;  --a3: 110 231 183; }
+.t-purple { --a4: 167 139 250; --a3: 196 181 253; }  /* purple → лаванда  */
+.t-rose   { --a4: 251 113 133; --a3: 253 164 175; }
+.t-orange { --a4: 251 146 60;  --a3: 253 186 116; }
+.t-blue   { --a4: 96 165 250;  --a3: 147 197 253; }
+.t-lime   { --a4: 163 230 53;  --a3: 190 242 100; }
+
+.card {
+  position: relative;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 1.25rem; border-radius: 1.25rem;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-top: 3px solid rgb(var(--a4));
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  border-color: rgb(var(--a4) / .45);
+  border-top-color: rgb(var(--a4));
+  box-shadow: 0 24px 48px -24px rgb(var(--a4) / .45);
+}
+
+.head { display: flex; align-items: center; justify-content: space-between; gap: 0;
+  padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+.brand { display: flex; align-items: center; gap: .875rem; min-width: 0; flex: 0 1 auto; }
+.tile {
+  width: 3rem; height: 3rem; flex-shrink: 0; border-radius: .9rem;
+  display: flex; align-items: center; justify-content: center;
+  background: rgb(var(--a4) / .14); border: 1px solid rgb(var(--a4) / .55);
+  color: rgb(var(--a3));
+  font-family: var(--display); font-size: 1rem; font-weight: 800; letter-spacing: -.02em;
+  transition: transform .2s cubic-bezier(.4, 0, .2, 1), background-color .2s;
+}
+.card:hover .tile { transform: scale(1.05); background: rgb(var(--a4) / .22); }
+.brand__text { min-width: 0; }
+.name-row { display: flex; align-items: center; flex-wrap: wrap; gap: .25rem .5rem; }
+.name { font-family: var(--display); font-size: 1.05rem; line-height: 1.5rem; font-weight: 800;
+  letter-spacing: -.01em; color: #fff; overflow-wrap: anywhere; }
+.tag { display: inline-block; padding: .15rem .55rem; border-radius: 9999px; font-size: 10px; font-weight: 700;
+  line-height: 15px; letter-spacing: .06em; text-transform: uppercase;
+  background: rgb(var(--a4) / .15); color: rgb(var(--a3)); border: 1px solid rgb(var(--a4) / .35); }
+.rating { display: flex; align-items: center; gap: .375rem; margin-top: .2rem; }
+.stars { flex-shrink: 0; font-size: .75rem; line-height: 1rem; color: var(--gold); letter-spacing: .05em; }
+.rating__text { font-size: .75rem; line-height: 1rem; color: var(--muted); }
+
+.fact { text-align: right; margin-left: auto; flex: 0 1 auto; overflow-wrap: break-word; }
+.fact dt { display: block; font-size: 11px; line-height: 16.5px; color: var(--faint); }
+.fact dd { font-size: .75rem; line-height: 1rem; font-weight: 700; color: rgb(var(--a3)); }
+.fact--green dd { color: #34d399; }
+
+/* Как в референсе: у первых двух карточек блок бонуса не ниже 112px,
+   чтобы короткий и длинный текст бонуса стояли вровень. */
+.card:nth-child(-n+2) .bonus { min-height: 112px; }
+.bonus { margin: 1.25rem 0; padding: .95rem 1rem .95rem 1.1rem; border-radius: .9rem;
+  background: rgb(var(--a4) / .09); border: 1px solid rgb(var(--a4) / .18);
+  border-left: 3px solid rgb(var(--a4)); }
+.bonus__head { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-bottom: .3rem;
+  font-size: .7rem; line-height: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: .09em;
+  color: rgb(var(--a3)); }
+.bonus__badge { flex-shrink: 0; font-size: 10px; line-height: 15px; padding: .1rem .45rem; border-radius: .35rem;
+  letter-spacing: .04em; background: rgb(var(--a4)); color: #0d0b10; font-weight: 800; }
+.bonus__text { font-size: 1.125rem; line-height: 1.35; font-weight: 800; color: #fff; overflow-wrap: anywhere; }
+
+.promo { margin-bottom: 1.25rem; }
+.promo__label { margin-bottom: .4rem; font-size: .75rem; line-height: 1rem; font-weight: 500; color: var(--faint); }
+.promo__box {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
+  padding: .6rem .6rem .6rem .9rem; border-radius: .9rem;
+  background: var(--bg); border: 1px dashed rgb(var(--a4) / .5);
+  transition: border-color .15s cubic-bezier(.4, 0, .2, 1);
+}
+.promo__box:hover { border-color: rgb(var(--a4)); }
+.promo__code-wrap { display: flex; align-items: center; gap: .5rem; min-width: 0; }
+.promo__ico { width: 1rem; height: 1rem; flex-shrink: 0; color: rgb(var(--a4)); }
+.promo__code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1rem; line-height: 1.5rem; font-weight: 700; letter-spacing: .08em; color: rgb(var(--a3));
+  overflow-wrap: anywhere; }
+
+.copy {
+  display: flex; align-items: center; gap: .375rem;
+  padding: .4rem .8rem; border-radius: 9999px;
+  font-size: .75rem; line-height: 1rem; font-weight: 700;
+  background: transparent; color: rgb(var(--a3)); border: 1px solid rgb(var(--a4) / .6);
+  transition: background-color .15s, color .15s, border-color .15s, transform .15s;
+}
+.copy:hover { background: rgb(var(--a4)); color: #0d0b10; border-color: rgb(var(--a4)); }
+.copy:active { transform: scale(.95); }
+.copy__done { display: none; align-items: center; gap: .375rem; color: #6ee7b7; font-weight: 700; }
+.copy__done svg { width: .875rem; height: .875rem; color: #6ee7b7; }
+.copy.is-done, .copy.is-done:hover { background: #0f2a1f; border-color: rgb(52 211 153 / .6); color: #6ee7b7; }
+.copy.is-done .copy__done { display: flex; }
+.copy.is-done .copy__idle { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+
+.cta-wrap { padding-top: .5rem; }
+.cta {
+  position: relative;
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: .5rem;
+  padding: .9rem 1.5rem; border-radius: 9999px;
+  font-weight: 800; font-size: .95rem; color: #0d0b10;
+  background: rgb(var(--a4));
+  box-shadow: 0 12px 28px -10px rgb(var(--a4) / .5);
+  transition: transform .15s cubic-bezier(.4, 0, .2, 1), filter .15s, box-shadow .15s;
+}
+.cta:hover { filter: brightness(1.07); transform: translateY(-1px); box-shadow: 0 16px 32px -10px rgb(var(--a4) / .6); }
+.cta:active { transform: scale(.99); }
+.cta__ico { width: 1.25rem; height: 1.25rem; transition: transform .15s cubic-bezier(.4, 0, .2, 1); }
+.card:hover .cta__ico { transform: translateX(.25rem); }
+
+.cta--soon { background: var(--card-2); color: #c9c4d4; border: 1px dashed #3a3446; box-shadow: none; cursor: default; }
+.cta--soon:hover { filter: none; transform: none; box-shadow: none; }
+
+/* ── низ страницы ──────────────────────────────────────────────────────── */
+
+.trust {
+  margin-top: 2.5rem; padding: .875rem; border-radius: 1rem;
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 1.5rem;
+  background: var(--card); border: 1px solid var(--line);
+  text-align: center; font-size: .75rem; line-height: 1rem; color: var(--muted);
+}
+.trust__item { display: flex; align-items: center; gap: .5rem; }
+.trust__ico { width: 1rem; height: 1rem; flex-shrink: 0; }
+.trust__ico--green { color: #34d399; }
+.trust__ico--amber { color: var(--gold); }
+
+.foot { margin: 2rem 0 1rem; text-align: center; font-size: .75rem; line-height: 1rem; color: var(--faint); }
+.foot__legal { margin-top: .25rem; }
+
+/* ── всплывашка «скопировано» ──────────────────────────────────────────── */
+
+.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); z-index: 50; pointer-events: none;
+  width: max-content; max-width: calc(100vw - 2rem); }
+.toast__box {
+  display: flex; align-items: center; gap: .625rem;
+  padding: .625rem 1rem; border-radius: 9999px;
+  background: var(--card-2); color: #fff; border: 1px solid rgba(255, 255, 255, .14);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / .5);
+  font-size: .875rem; line-height: 1.25rem;
+  animation: slide-up .3s cubic-bezier(.16, 1, .3, 1) forwards;
+}
+.toast__dot { width: .5rem; height: .5rem; border-radius: 9999px; background: #34d399; flex-shrink: 0; }
+.toast__code { color: var(--gold); font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+@keyframes slide-up { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ── ширина экрана (брейкпоинты как в референсе: 640, 768) ─────────────── */
+
+@media (min-width: 640px) {
+  body { padding: 1.5rem; }
+  .hero { margin-bottom: 3rem; }
+  .hero__br { display: inline; }
+  .hero__lead { font-size: 1rem; line-height: 1.55rem; }
+  .grid { gap: 1.5rem; }
+  .card { padding: 1.5rem; }
+  .name { font-size: 1.15rem; line-height: 1.75rem; }
+  .bonus__text { font-size: 1.25rem; line-height: 1.75rem; }
+  .promo__code { font-size: 1.125rem; line-height: 1.75rem; }
+}
+@media (min-width: 768px) {
+  body { padding: 2.5rem; }
+  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* В две колонки соседние карточки выравниваются по строкам: блоки бонуса
+   одной высоты, кнопки на одной линии — как в референсе, но для любых текстов. */
+@supports (grid-template-rows: subgrid) {
+  @media (min-width: 768px) {
+    .card { display: grid; grid-row: span 4; grid-template-rows: subgrid; grid-template-columns: minmax(0, 1fr);
+      justify-content: normal; row-gap: 0; align-content: start; }
+    .card > .cta-wrap { grid-row: 4; align-self: end; }
+  }
+}
+
+/* ── настройки системы ─────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .badge__dot, .toast__box { animation: none; }
+  .card, .tile, .cta, .cta__ico, .copy { transition: none; }
+  .card:hover, .card:hover .tile, .card:hover .cta__ico, .copy:active, .cta:active, .cta:hover { transform: none; }
+}
+
+@media (forced-colors: active) {
+  .hero__accent { color: CanvasText; }
+  .tile, .cta, .copy, .tag, .bonus, .promo__box, .card { border: 1px solid CanvasText; }
+  .cta { forced-color-adjust: none; background: ButtonFace; color: ButtonText; }
+  /* «Ссылка скоро» — не кнопка, в высокой контрастности не должна выглядеть как кнопка */
+  .cta--soon { forced-color-adjust: auto; background: Canvas; color: GrayText; border: 1px dashed GrayText; }
+}
